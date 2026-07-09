@@ -98,16 +98,19 @@ async def generate_tests(
             filepath.write_bytes(file_content)
             input_path = str(filepath)
         elif text_input.strip():
-            # Save text input to a file
-            ext_map = {
-                "openapi": ".yaml" if text_input.strip().startswith("openapi:") or text_input.strip().startswith("---") else ".json",
-                "code": ".py",
-                "nl": ".txt",
-            }
-            ext = ext_map.get(source, ".txt")
-            filepath = work_dir / f"input{ext}"
-            filepath.write_text(text_input.strip(), encoding="utf-8")
-            input_path = str(filepath)
+            # URL 模式直接传原始 URL，不保存为文件
+            if source == "url":
+                input_path = text_input.strip()
+            else:
+                ext_map = {
+                    "openapi": ".yaml" if text_input.strip().startswith("openapi:") or text_input.strip().startswith("---") else ".json",
+                    "code": ".py",
+                    "nl": ".txt",
+                }
+                ext = ext_map.get(source, ".txt")
+                filepath = work_dir / f"input{ext}"
+                filepath.write_text(text_input.strip(), encoding="utf-8")
+                input_path = str(filepath)
         else:
             return JSONResponse(
                 status_code=400,

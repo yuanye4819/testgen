@@ -1,4 +1,4 @@
-"""
+﻿"""
 Python 源代码 AST 解析器
 ---------------------------
 使用 Python 标准库 ast 模块遍历源代码，提取函数、方法和类定义。
@@ -76,7 +76,7 @@ class CodeParser(BaseParser):
                 functions.extend(visitor.functions)
                 classes.extend(visitor.classes)
             except SyntaxError as e:
-                print(f"  ⚠ 跳过语法错误文件 {py_file}: {e}")
+                print(f"  [!] 跳过语法错误文件 {py_file}: {e}")
                 continue
 
         context.functions = functions

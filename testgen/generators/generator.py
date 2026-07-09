@@ -117,7 +117,7 @@ class TestCaseGenerator(BaseGenerator):
                 )
                 cases = self._parse_llm_response(result, TestType.API, endpoint)
             except Exception as e:
-                print(f"  ⚠ LLM 生成失败 ({endpoint.method.value} {endpoint.path}): {e}")
+                print(f"  [!] LLM 生成失败 ({endpoint.method.value} {endpoint.path}): {e}")
                 cases = self._fallback_api_cases(endpoint, context)
 
             suite = TestSuite(
@@ -148,7 +148,7 @@ class TestCaseGenerator(BaseGenerator):
                 )
                 cases = self._parse_llm_response(result, TestType.UNIT, func)
             except Exception as e:
-                print(f"  ⚠ LLM 生成失败 ({func.name}): {e}")
+                print(f"  [!] LLM 生成失败 ({func.name}): {e}")
                 cases = self._fallback_unit_cases(func, context)
 
             suite = TestSuite(
@@ -177,7 +177,7 @@ class TestCaseGenerator(BaseGenerator):
             )
             cases = self._parse_llm_response(result, test_type)
         except Exception as e:
-            print(f"  ⚠ LLM 生成失败: {e}")
+            print(f"  [!] LLM 生成失败: {e}")
             cases = self._fallback_generic_cases(context, test_type)
 
         return TestSuite(
@@ -452,14 +452,13 @@ class TestCaseGenerator(BaseGenerator):
     def _fallback_generic_cases(
         self, context: GenerationContext, test_type: TestType
     ) -> list[TestCase]:
-        """
-        通用规则模板：生成 3 个基础用例
+        """通用规则模板：有 URL 页面数据则生成针对性用例，否则生成骨架"""
         
-        适用于 E2E / Integration / Performance 等无专门解析器的类型：
-          1. 功能验证 - 正常流程 (high)
-          2. 边界条件测试 (medium)
-          3. 异常处理测试 (medium)
-        """
+        # ── URL 模式：基于页面元素生成 ──────────────────
+        if context.page_elements:
+            return self._generate_url_cases(context, test_type)
+        
+        # ── 通用骨架 ─────────────────────────────────────
         return [
             TestCase(
                 id=f"{test_type.value}_001",
@@ -468,9 +467,7 @@ class TestCaseGenerator(BaseGenerator):
                 test_type=test_type,
                 tags=["smoke"],
                 priority="P0",
-                steps=[
-                    TestStep(step_number=1, action="执行正常流程", expected_result="功能按预期工作")
-                ],
+                steps=[TestStep(step_number=1, action="执行正常流程", expected_result="功能按预期工作")],
             ),
             TestCase(
                 id=f"{test_type.value}_002",
@@ -479,9 +476,7 @@ class TestCaseGenerator(BaseGenerator):
                 test_type=test_type,
                 tags=["boundary"],
                 priority="P2",
-                steps=[
-                    TestStep(step_number=1, action="输入边界值", expected_result="系统正确处理边界情况")
-                ],
+                steps=[TestStep(step_number=1, action="输入边界值", expected_result="系统正确处理边界情况")],
             ),
             TestCase(
                 id=f"{test_type.value}_003",
@@ -490,8 +485,81 @@ class TestCaseGenerator(BaseGenerator):
                 test_type=test_type,
                 tags=["error"],
                 priority="P2",
-                steps=[
-                    TestStep(step_number=1, action="输入异常数据", expected_result="系统返回友好的错误信息，不崩溃")
-                ],
+                steps=[TestStep(step_number=1, action="输入异常数据", expected_result="系统返回友好的错误信息，不崩溃")],
             ),
         ]
+
+    def _generate_url_cases(self, context, test_type) -> list[TestCase]:
+        """根据抓取的页面元素生成针对性测试用例"""
+        pe = context.page_elements
+        title = context.page_title or "页面"
+        cases = []
+        idx = 0
+
+        # 页面加载验证
+        idx += 1
+        cases.append(TestCase(
+            id=f"{test_type.value}_{idx:03d}",
+            name=f"{title} - 页面加载验证",
+            description=f"验证 {title} 页面能正常加载，页面元素完整显示",
+            test_type=test_type, tags=["smoke", "e2e"], priority="P0",
+            preconditions="网络正常，服务可用",
+            steps=[TestStep(step_number=1, action=f"访问页面 {title}", expected_result="页面正常加载，HTTP 200，页面元素完整渲染")],
+            expected_result="页面成功加载，所有关键元素可见",
+        ))
+
+        # 表单测试
+        for i, form in enumerate(pe.get("forms", [])):
+            idx += 1
+            method = form.get("method", "GET")
+            fields = form.get("inputs", [])
+            field_desc = "、".join(f"{f['name']}({f['type']})" for f in fields if f["name"])
+            required_fields = [f["name"] for f in fields if f.get("required")]
+            cases.append(TestCase(
+                id=f"{test_type.value}_{idx:03d}",
+                name=f"{title} - 表单{i+1}正常提交",
+                description=f"使用合法数据提交 {method} 表单，字段: {field_desc}",
+                test_type=test_type, tags=["smoke", "form"], priority="P0",
+                preconditions="表单字段可正常交互",
+                steps=[TestStep(step_number=1, action=f"填写所有必填字段并点击提交", expected_result="表单成功提交，跳转或显示成功提示")],
+                expected_result="表单提交成功，无错误提示",
+            ))
+            if required_fields:
+                idx += 1
+                cases.append(TestCase(
+                    id=f"{test_type.value}_{idx:03d}",
+                    name=f"{title} - 表单{i+1}必填字段校验",
+                    description=f"不填必填字段（{', '.join(required_fields[:3])}）提交表单",
+                    test_type=test_type, tags=["validation", "form"], priority="P1",
+                    preconditions="表单可访问",
+                    steps=[TestStep(step_number=1, action="清空必填字段，直接点击提交", expected_result="显示必填字段校验提示，表单不提交")],
+                    expected_result="触发前端校验，阻止空表单提交",
+                ))
+
+        # 按钮测试
+        buttons = pe.get("buttons", [])
+        for i, btn in enumerate(buttons[:5]):
+            idx += 1
+            cases.append(TestCase(
+                id=f"{test_type.value}_{idx:03d}",
+                name=f"{title} - 按钮「{btn}」可点击",
+                description=f"验证按钮「{btn}」存在且可点击",
+                test_type=test_type, tags=["ui", "button"], priority="P1",
+                steps=[TestStep(step_number=1, action=f"点击「{btn}」按钮", expected_result="按钮响应，触发对应操作或跳转")],
+                expected_result="按钮可正常点击，无JS报错",
+            ))
+
+        # 链接测试
+        links = pe.get("links", [])
+        for i, link in enumerate(links[:5]):
+            idx += 1
+            cases.append(TestCase(
+                id=f"{test_type.value}_{idx:03d}",
+                name=f"{title} - 链接「{link['text']}」可跳转",
+                description=f"验证链接「{link['text']}」({link['href'][:80]}) 可正常跳转",
+                test_type=test_type, tags=["ui", "link"], priority="P2",
+                steps=[TestStep(step_number=1, action=f"点击链接「{link['text']}」", expected_result="跳转到目标页面，HTTP 200")],
+                expected_result="链接正常跳转，目标页面可访问",
+            ))
+
+        return cases[:15]

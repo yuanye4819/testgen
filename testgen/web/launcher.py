@@ -1,4 +1,4 @@
-"""
+﻿"""
 TestGen Web Launcher
 Starts the FastAPI server and opens the default browser.
 Used as the entry point for both development and the .exe build.
@@ -11,7 +11,7 @@ import threading
 import time
 
 
-def launch(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = True):
+def launch(host: str = "127.0.0.1", port: int = 19900, open_browser: bool = True):
     """
     Start the TestGen web server and optionally open a browser.
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="TestGen Web Server")
     parser.add_argument("--host", default="127.0.0.1", help="Bind address")
-    parser.add_argument("--port", type=int, default=8080, help="Port number")
+    parser.add_argument("--port", type=int, default=19900, help="Port number")
     parser.add_argument("--no-browser", action="store_true", help="Don't open browser")
     args = parser.parse_args()
 
