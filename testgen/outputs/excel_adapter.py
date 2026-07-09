@@ -1,4 +1,4 @@
-"""
+﻿"""
 Excel / CSV 输出适配器
 ------------------------
 将测试套件导出为表格格式，方便非开发人员查看和评审。
@@ -56,15 +56,15 @@ class ExcelAdapter(BaseOutputAdapter):
 
         # 优先级颜色
         priority_fills = {
-            "high": PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"),
-            "medium": PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"),
-            "low": PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"),
+            "P0": PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"),
+            "P2": PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"),
+            "P3": PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"),
         }
 
         headers = [
             "用例ID", "用例名称", "描述", "测试类型", "优先级",
-            "标签", "前置条件", "步骤编号", "操作步骤", "预期结果",
-            "断言", "期望状态码",
+            "标签", "前置条件", "整体预期结果", "步骤编号", "操作步骤", "预期结果",
+            "断言", "期望状态码", "用例预期结果",
         ]
 
         generated_files: list[str] = []
@@ -89,7 +89,7 @@ class ExcelAdapter(BaseOutputAdapter):
             # 写测试用例数据
             row = 2
             for case in suite.test_cases:
-                preconditions_str = "\n".join(f"• {p}" for p in case.preconditions)
+                preconditions_str = case.preconditions
                 tags_str = ", ".join(case.tags)
 
                 if case.steps:
@@ -98,7 +98,7 @@ class ExcelAdapter(BaseOutputAdapter):
                         row_data = [
                             case.id, case.name, case.description,
                             case.test_type.value, case.priority, tags_str,
-                            preconditions_str, step.step_number, step.action,
+                            preconditions_str, case.expected_result, step.step_number, step.action,
                             step.expected_result, assertions_str, case.expected_status,
                         ]
                         for col, value in enumerate(row_data, 1):
@@ -115,7 +115,7 @@ class ExcelAdapter(BaseOutputAdapter):
                         from openpyxl.utils import get_column_letter
                         start_row = row - len(case.steps)
                         end_row = row - 1
-                        for merge_col in [1, 2, 3, 4, 5, 6, 7, 12]:
+                        for merge_col in [1, 2, 3, 4, 5, 6, 7, 8, 13]:
                             if start_row < end_row:
                                 col_letter = get_column_letter(merge_col)
                                 ws.merge_cells(f"{col_letter}{start_row}:{col_letter}{end_row}")
@@ -123,7 +123,7 @@ class ExcelAdapter(BaseOutputAdapter):
                     row_data = [
                         case.id, case.name, case.description,
                         case.test_type.value, case.priority, tags_str,
-                        preconditions_str, "", "", "", "", case.expected_status,
+                        preconditions_str, case.expected_result, "", "", "", "", case.expected_status,
                     ]
                     for col, value in enumerate(row_data, 1):
                         cell = ws.cell(row=row, column=col, value=value)
@@ -160,7 +160,7 @@ class CSVAdapter(BaseOutputAdapter):
 
         headers = [
             "用例ID", "用例名称", "描述", "测试类型", "优先级",
-            "标签", "前置条件", "步骤编号", "操作步骤", "预期结果", "断言", "期望状态码",
+            "标签", "前置条件", "整体预期结果", "步骤编号", "操作步骤", "预期结果", "断言", "期望状态码", "用例预期结果",
         ]
         generated_files: list[str] = []
 
@@ -173,7 +173,7 @@ class CSVAdapter(BaseOutputAdapter):
                 writer.writerow(headers)
 
                 for case in suite.test_cases:
-                    preconditions_str = "; ".join(case.preconditions)
+                    preconditions_str = case.preconditions
                     tags_str = ", ".join(case.tags)
 
                     if case.steps:
@@ -182,14 +182,14 @@ class CSVAdapter(BaseOutputAdapter):
                             writer.writerow([
                                 case.id, case.name, case.description,
                                 case.test_type.value, case.priority, tags_str,
-                                preconditions_str, step.step_number, step.action,
+                                preconditions_str, case.expected_result, step.step_number, step.action,
                                 step.expected_result, assertions_str, case.expected_status,
                             ])
                     else:
                         writer.writerow([
                             case.id, case.name, case.description,
                             case.test_type.value, case.priority, tags_str,
-                            preconditions_str, "", "", "", "", case.expected_status,
+                            preconditions_str, case.expected_result, "", "", "", "", case.expected_status,
                         ])
 
             generated_files.append(str(filepath))

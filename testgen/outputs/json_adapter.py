@@ -1,4 +1,4 @@
-"""
+﻿"""
 JSON / YAML 输出适配器
 ------------------------
 将测试套件序列化为结构化数据文件。
@@ -27,9 +27,7 @@ class JSONAdapter(BaseOutputAdapter):
     def format_name(self) -> str:
         return "json"
 
-    def write(
-        self, suites: list[TestSuite], context: GenerationContext
-    ) -> list[str]:
+    def write(self, suites: list[TestSuite], context: GenerationContext) -> list[str]:
         output_dir = Path(context.output_dir) / "json"
         output_dir.mkdir(parents=True, exist_ok=True)
         generated_files: list[str] = []
@@ -37,22 +35,14 @@ class JSONAdapter(BaseOutputAdapter):
         for suite in suites:
             filename = self._sanitize(suite.name) + ".json"
             filepath = output_dir / filename
-
             data = self._suite_to_dict(suite)
-            filepath.write_text(
-                json.dumps(data, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
+            filepath.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
             generated_files.append(str(filepath))
 
-        # 同时输出一个合并文件
         if len(suites) > 1:
             all_data = [self._suite_to_dict(s) for s in suites]
             merged_path = output_dir / "_all_test_suites.json"
-            merged_path.write_text(
-                json.dumps(all_data, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
+            merged_path.write_text(json.dumps(all_data, indent=2, ensure_ascii=False), encoding="utf-8")
             generated_files.append(str(merged_path))
 
         return generated_files
@@ -75,6 +65,7 @@ class JSONAdapter(BaseOutputAdapter):
             "priority": case.priority,
             "tags": case.tags,
             "preconditions": case.preconditions,
+            "expected_result": case.expected_result,
             "steps": [
                 {
                     "step_number": s.step_number,
@@ -103,9 +94,7 @@ class YAMLAdapter(BaseOutputAdapter):
     def format_name(self) -> str:
         return "yaml"
 
-    def write(
-        self, suites: list[TestSuite], context: GenerationContext
-    ) -> list[str]:
+    def write(self, suites: list[TestSuite], context: GenerationContext) -> list[str]:
         try:
             import yaml
         except ImportError:
@@ -118,7 +107,6 @@ class YAMLAdapter(BaseOutputAdapter):
         for suite in suites:
             filename = self._sanitize(suite.name) + ".yaml"
             filepath = output_dir / filename
-
             data = self._suite_to_dict(suite)
             filepath.write_text(
                 yaml.dump(data, allow_unicode=True, default_flow_style=False, sort_keys=False),
@@ -146,6 +134,7 @@ class YAMLAdapter(BaseOutputAdapter):
             "priority": case.priority,
             "tags": case.tags,
             "preconditions": case.preconditions,
+            "expected_result": case.expected_result,
             "steps": [
                 {
                     "step_number": s.step_number,

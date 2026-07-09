@@ -41,10 +41,7 @@ import pytest
 # Priority: {{ case.priority }}  Tags: {{ case.tags | join(", ") }}
 # -----------------------------------------------------------------
 {% if case.preconditions %}
-# Preconditions:
-{% for p in case.preconditions %}
-#   - {{ p }}
-{% endfor %}
+# Preconditions: {{ case.preconditions }}
 {% endif %}
 
 {% if case.steps %}

@@ -139,16 +139,17 @@ class TestCase:
     测试用例是生成系统的最小输出单元，包含完整的前置条件、
     测试步骤和期望结果。兼容 API 测试和单元测试两种场景。
     
-    优先级: high（核心功能）| medium（边界/异常）| low（极端情况）
+    优先级: P0（核心必测）| P1（重要）| P2（一般）| P3（低优）
     """
     id: str                                      # 唯一标识（如 api_GET__users_ok）
     name: str                                    # 用例名称
     description: str = ""                        # 详细描述
     test_type: TestType = TestType.API           # 测试类型
-    tags: list[str] = field(default_factory=list)  # 标签（用于分类筛选）
-    priority: str = "medium"                     # 优先级: high | medium | low
-    preconditions: list[str] = field(default_factory=list)  # 前置条件列表
+    tags: list[str] = field(default_factory=list)  # 标签（smoke, regression 等）
+    priority: str = "P2"                         # 优先级: P0 | P1 | P2 | P3
+    preconditions: str = ""                      # 前置条件
     steps: list[TestStep] = field(default_factory=list)     # 测试步骤
+    expected_result: str = ""                    # 整体预期结果
     
     # API 测试特有字段
     endpoint: Optional[APIEndpoint] = None       # 关联的 API 端点（回填引用）

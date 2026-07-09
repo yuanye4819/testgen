@@ -1,4 +1,4 @@
-"""
+﻿"""
 模板引擎
 ---------
 基于 Jinja2 的模板渲染引擎，用于规则模式下生成测试代码。
@@ -120,15 +120,15 @@ class Test{{ case.name | replace(" ", "_") | replace("-", "_") }}:
       "name": "{{ case.name }}",
       "description": "{{ case.description }}",
       "priority": "{{ case.priority }}",
-      "tags": {{ case.tags | tojson }},
-      "preconditions": {{ case.preconditions | tojson }},
+      "tags": {{ case.tags |"preconditions": "{{ case.preconditions }}",
+      "preconditions": "{{ case.preconditions }}"|"preconditions": "{{ case.preconditions }}",
       "steps": [
 {% for step in case.steps %}
         {
           "step_number": {{ step.step_number }},
           "action": "{{ step.action }}",
           "expected_result": "{{ step.expected_result }}",
-          "assertions": {{ step.assertions | tojson }}
+          "assertions": {{ step.assertions |"preconditions": "{{ case.preconditions }}"
         }{% if not loop.last %},{% endif %}
 {% endfor %}
       ]

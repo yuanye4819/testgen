@@ -1,4 +1,4 @@
-"""
+﻿"""
 Prompt 构建器
 --------------
 根据解析结果，针对不同测试类型构建结构化的 LLM 提示词。
@@ -41,9 +41,9 @@ class PromptBuilder:
     {
       "name": "测试用例名称",
       "description": "详细描述",
-      "priority": "high|medium|low",
+      "priority": "P0|P1|P2|P3",
       "tags": ["标签1", "标签2"],
-      "preconditions": ["前置条件1"],
+      "preconditions": "前置条件1",
       "steps": [
         {"step_number": 1, "action": "操作步骤", "expected_result": "预期结果", "assertions": ["断言1"]}
       ],

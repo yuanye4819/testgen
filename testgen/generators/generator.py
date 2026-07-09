@@ -1,4 +1,4 @@
-"""
+﻿"""
 主测试用例生成器
 --------------------
 协调 LLM 智能生成与规则模板回退两种模式。
@@ -220,8 +220,8 @@ class TestCaseGenerator(BaseGenerator):
                 description=rc.get("description", ""),
                 test_type=test_type,
                 tags=rc.get("tags", []),
-                priority=rc.get("priority", "medium"),
-                preconditions=rc.get("preconditions", []),
+                priority=rc.get("priority", "P2"),
+                preconditions=rc.get("preconditions", ""),
                 steps=steps,
                 expected_status=rc.get("expected_status", 200),
                 expected_response=rc.get("expected_response"),
@@ -312,8 +312,8 @@ class TestCaseGenerator(BaseGenerator):
             description=f"使用合法参数调用 {endpoint.path}",
             test_type=TestType.API,
             tags=endpoint.tags + ["smoke"],
-            priority="high",
-            preconditions=["服务正常运行"],
+            priority="P0",
+            preconditions="服务正常运行",
             steps=[
                 TestStep(
                     step_number=1,
@@ -338,8 +338,8 @@ class TestCaseGenerator(BaseGenerator):
                 description="验证缺少必填参数时的错误处理",
                 test_type=TestType.API,
                 tags=endpoint.tags + ["validation"],
-                priority="high",
-                preconditions=[],
+                priority="P0",
+                preconditions="",
                 steps=[
                     TestStep(
                         step_number=1,
@@ -360,7 +360,7 @@ class TestCaseGenerator(BaseGenerator):
                 description="验证空请求体的处理",
                 test_type=TestType.API,
                 tags=endpoint.tags + ["validation"],
-                priority="medium",
+                priority="P2",
                 steps=[
                     TestStep(
                         step_number=1,
@@ -397,8 +397,8 @@ class TestCaseGenerator(BaseGenerator):
             description=f"使用合法参数调用 {func.name}",
             test_type=TestType.UNIT,
             tags=["unit", func.module],
-            priority="high",
-            preconditions=["所有依赖可用"],
+            priority="P0",
+            preconditions="所有依赖可用",
             steps=[
                 TestStep(
                     step_number=1,
@@ -417,7 +417,7 @@ class TestCaseGenerator(BaseGenerator):
                 description=f"使用边界值/空值参数调用 {func.name}",
                 test_type=TestType.UNIT,
                 tags=["unit", func.module, "boundary"],
-                priority="medium",
+                priority="P2",
                 steps=[
                     TestStep(
                         step_number=1,
@@ -436,7 +436,7 @@ class TestCaseGenerator(BaseGenerator):
                 description=f"使用非法参数调用 {func.name}",
                 test_type=TestType.UNIT,
                 tags=["unit", func.module, "error"],
-                priority="medium",
+                priority="P2",
                 steps=[
                     TestStep(
                         step_number=1,
@@ -467,7 +467,7 @@ class TestCaseGenerator(BaseGenerator):
                 description="验证核心功能在正常条件下的表现",
                 test_type=test_type,
                 tags=["smoke"],
-                priority="high",
+                priority="P0",
                 steps=[
                     TestStep(step_number=1, action="执行正常流程", expected_result="功能按预期工作")
                 ],
@@ -478,7 +478,7 @@ class TestCaseGenerator(BaseGenerator):
                 description="验证系统在边界条件下的表现",
                 test_type=test_type,
                 tags=["boundary"],
-                priority="medium",
+                priority="P2",
                 steps=[
                     TestStep(step_number=1, action="输入边界值", expected_result="系统正确处理边界情况")
                 ],
@@ -489,7 +489,7 @@ class TestCaseGenerator(BaseGenerator):
                 description="验证系统对异常输入的处理",
                 test_type=test_type,
                 tags=["error"],
-                priority="medium",
+                priority="P2",
                 steps=[
                     TestStep(step_number=1, action="输入异常数据", expected_result="系统返回友好的错误信息，不崩溃")
                 ],
