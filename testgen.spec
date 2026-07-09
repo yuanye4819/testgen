@@ -120,7 +120,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='TGfix',
+    name='TestGen',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -135,6 +135,10 @@ exe = EXE(
     entitlements_file=None,
     icon=None,  # Set to .ico path if you have an icon
 )
+
+
+
+
 
 
 

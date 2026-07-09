@@ -220,6 +220,8 @@ class GenerationContext:
     functions: list[FunctionDef] = field(default_factory=list)        # AST 解析的函数
     classes: list[ClassDef] = field(default_factory=list)             # AST 解析的类
     natural_lang_desc: str = ""                                      # 自然语言描述原文
+    page_title: str = ""                                             # 网页标题（URL 模式）
+    page_elements: dict[str, Any] = field(default_factory=dict)      # 页面元素（URL 模式）
     
     # ── 生成阶段配置（CLI → 生成器）──────────────────
     llm_enabled: bool = True                       # 是否启用 LLM（False 则用规则模板）

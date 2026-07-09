@@ -92,7 +92,7 @@ class NaturalLangParser(BaseParser):
 
         try:
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            resp = requests.get(url, timeout=15, headers=headers)
+            resp = requests.get(url, timeout=30, headers=headers)
             resp.raise_for_status()
         except Exception as e:
             raise ValueError(f"无法访问网页: {e}")
