@@ -1,12 +1,13 @@
 """
-TestGen Desktop GUI
-Native desktop window with embedded WebView — no browser, no CMD window.
+TestGen Desktop Launcher
+Starts backend server and opens default browser — full browser experience.
 """
 
 import sys
 import os
 import threading
 import time
+import webbrowser
 
 
 def find_free_port(start=19900):
@@ -23,13 +24,12 @@ def start_server(port: int):
     """Start uvicorn in a background daemon thread."""
     import uvicorn
 
-    # Suppress uvicorn logs — GUI mode has no terminal
     config = uvicorn.Config(
         "testgen.web.server:app",
         host="127.0.0.1",
         port=port,
         log_level="warning",
-        log_config=None,  # disable dictConfig which crashes without tty
+        log_config=None,
     )
     server = uvicorn.Server(config)
 
@@ -39,7 +39,6 @@ def start_server(port: int):
     t = threading.Thread(target=run, daemon=True)
     t.start()
 
-    # Wait until the server is actually running
     import urllib.request
     for _ in range(30):
         try:
@@ -52,25 +51,18 @@ def start_server(port: int):
 
 def main():
     port = find_free_port()
-
-    # Start backend server
     start_server(port)
 
-    # Open native desktop window with embedded WebView
-    import webview
-
     url = f"http://127.0.0.1:{port}"
-    webview.create_window(
-        title="TestGen - AI 测试用例生成器",
-        url=url,
-        width=1200,
-        height=800,
-        min_size=(900, 600),
-        resizable=True,
-        fullscreen=False,
-        text_select=True,
-    )
-    webview.start()
+    print(f"TestGen running at {url}")
+    webbrowser.open(url)
+
+    # Keep alive
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Shutting down...")
 
 
 if __name__ == "__main__":

@@ -89,9 +89,6 @@ a = Analysis(
         'aiofiles',
         'docx',
         'pdfplumber',
-        'webview',
-        'webview.platforms',
-        'webview.platforms.winforms',
     ],
     hookspath=[],
     hooksconfig={},
@@ -135,6 +132,8 @@ exe = EXE(
     entitlements_file=None,
     icon=None,  # Set to .ico path if you have an icon
 )
+
+
 
 
 
