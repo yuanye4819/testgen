@@ -46,6 +46,7 @@ class Orchestrator:
             InputSource.OPENAPI: OpenAPIParser(),
             InputSource.SOURCE_CODE: CodeParser(),
             InputSource.NATURAL_LANG: NaturalLangParser(),
+            InputSource.URL: NaturalLangParser(),
         }
         self._generator = TestCaseGenerator()
         self._output_adapters = {
