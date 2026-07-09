@@ -28,6 +28,7 @@ INPUT_SOURCE_MAP = {
     "python": InputSource.SOURCE_CODE,
     "nl": InputSource.NATURAL_LANG,
     "text": InputSource.NATURAL_LANG,
+    "url": InputSource.URL,
 }
 
 OUTPUT_FORMAT_MAP = {
@@ -71,7 +72,7 @@ def main():
 )
 @click.option(
     "-s", "--source",
-    type=click.Choice(["openapi", "code", "nl"]),
+    type=click.Choice(["openapi", "code", "nl", "url"]),
     default="openapi",
     help="输入来源类型 (openapi/code/nl)",
 )

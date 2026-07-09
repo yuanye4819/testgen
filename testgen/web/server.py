@@ -34,6 +34,7 @@ INPUT_SOURCE_MAP = {
     "openapi": InputSource.OPENAPI,
     "code": InputSource.SOURCE_CODE,
     "nl": InputSource.NATURAL_LANG,
+    "url": InputSource.URL,
 }
 
 OUTPUT_FORMAT_MAP = {

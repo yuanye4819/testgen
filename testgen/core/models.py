@@ -34,6 +34,7 @@ class InputSource(Enum):
     OPENAPI = "openapi"
     SOURCE_CODE = "source_code"
     NATURAL_LANG = "natural_lang"
+    URL = "url"
 
 
 class OutputFormat(Enum):
