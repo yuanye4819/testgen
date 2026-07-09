@@ -1,0 +1,25 @@
+# Build
+dist/
+build/
+*.spec.bak
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Output
+output/
+output_*/
+output_test*/
+
+# Test temp files
+test_input.docx
+test_en.docx
+test_input.pdf

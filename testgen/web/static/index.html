@@ -1,0 +1,325 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestGen - AI 测试用例生成器</title>
+<style>
+  :root {
+    --bg: #0b0d14;
+    --surface: #131620;
+    --card: #181c28;
+    --border: #252a38;
+    --border-light: #2f3545;
+    --text: #e2e6f0;
+    --text-dim: #9ca3b8;
+    --accent: #6c72f5;
+    --accent-glow: rgba(108,114,245,0.25);
+    --accent-soft: rgba(108,114,245,0.10);
+    --green: #34d399;
+    --green-soft: rgba(52,211,153,0.12);
+    --red: #f87171;
+    --red-soft: rgba(248,113,113,0.12);
+    --amber: #fbbf24;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.2);
+    --shadow-btn: 0 2px 8px var(--accent-glow);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    background-image: radial-gradient(ellipse at 50% 0%, rgba(108,114,245,0.04) 0%, transparent 70%);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 1120px; margin: 0 auto; padding: 32px 24px 60px; }
+  header { text-align: center; margin-bottom: 36px; padding-top: 8px; }
+  header .logo-icon { display: inline-block; width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), #a78bfa); border-radius: 14px; margin-bottom: 14px; box-shadow: 0 8px 24px var(--accent-glow); line-height: 48px; font-size: 22px; }
+  header h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #c7d2fe, #a78bfa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+  header p { color: var(--text-dim); margin-top: 6px; font-size: 0.92rem; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow-card); transition: border-color 0.25s; }
+  .card:hover { border-color: var(--border-light); }
+  .card-label { display: inline-flex; align-items: center; gap: 7px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-dim); margin-bottom: 16px; }
+  .card-label .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+  .upload-zone { border: 2px dashed var(--border-light); border-radius: var(--radius); padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.22s; position: relative; background: rgba(108,114,245,0.02); }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(108,114,245,0.08); }
+  .upload-zone .upload-icon { font-size: 2.6rem; margin-bottom: 6px; }
+  .upload-zone .upload-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+  .upload-zone .upload-hint { color: var(--text-dim); font-size: 0.8rem; }
+  .upload-zone input { display: none; }
+
+  textarea { width: 100%; background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text); padding: 13px 14px; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.81rem; resize: vertical; min-height: 130px; line-height: 1.55; transition: border-color 0.2s, box-shadow 0.2s; }
+  textarea::placeholder { color: #505668; }
+  textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .file-info { font-size: 0.78rem; margin-top: 6px; }
+  .file-info .file-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-soft); color: var(--accent); padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .format-hint { font-size: 0.78rem; color: var(--text-dim); margin-top: 8px; padding: 8px 12px; background: rgba(108,114,245,0.04); border-radius: 6px; border-left: 3px solid var(--accent); line-height: 1.45; transition: all 0.3s; }
+  .divider { text-align: center; color: var(--border-light); margin: 16px 0; font-size: 0.75rem; font-weight: 600; letter-spacing: 2px; }
+
+  .row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .field { flex: 1; min-width: 110px; }
+  .field label { display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-dim); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.6px; }
+  select, input[type="text"], input[type="number"], input[type="password"] { width: 100%; background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text); padding: 9px 11px; font-size: 0.84rem; transition: all 0.2s; }
+  select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+  select:focus, input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .checks { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 2px; }
+  .checks label { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; cursor: pointer; color: var(--text-dim); transition: color 0.15s; }
+  .checks label:hover { color: var(--text); }
+  .checks input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+  .checks input:checked + span { color: var(--text); font-weight: 500; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface); border-radius: var(--radius-sm); margin-bottom: 14px; }
+  .toggle-row span { font-size: 0.84rem; font-weight: 600; }
+  .toggle { position: relative; width: 46px; height: 26px; background: var(--border-light); border-radius: 13px; cursor: pointer; transition: 0.25s; }
+  .toggle.on { background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+  .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .toggle.on::after { left: 23px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 22px; border: none; border-radius: var(--radius-sm); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.22s; letter-spacing: 0.2px; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #818cf8); color: white; width: 100%; margin-top: 6px; padding: 13px; box-shadow: var(--shadow-btn); font-size: 0.92rem; }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: none; box-shadow: none; }
+  .btn-save { background: transparent; color: var(--accent); border: 1px solid rgba(108,114,245,0.35); width: 100%; margin-bottom: 8px; padding: 10px; font-size: 0.82rem; }
+  .btn-save:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .btn-sm { padding: 7px 16px; font-size: 0.78rem; border-radius: 6px; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border-light); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .save-status { font-size: 0.73rem; text-align: center; min-height: 19px; margin-bottom: 6px; transition: opacity 0.3s; }
+
+  .status-bar { display: none; align-items: center; gap: 10px; padding: 12px 18px; border-radius: var(--radius-sm); margin-top: 18px; font-size: 0.85rem; font-weight: 500; background: var(--card); border: 1px solid var(--border); }
+  .spinner { width: 18px; height: 18px; border: 2.5px solid var(--border-light); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.65s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .results { display: none; margin-top: 22px; }
+  .results .card { padding: 18px 20px; }
+  .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+  .badge-success { background: var(--green-soft); color: var(--green); }
+  .badge-success::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+  .tabs { display: flex; gap: 2px; border-bottom: 2px solid var(--border); margin-bottom: 0; overflow-x: auto; }
+  .tab { padding: 8px 18px; font-size: 0.8rem; cursor: pointer; border-radius: 8px 8px 0 0; color: var(--text-dim); white-space: nowrap; font-weight: 500; transition: 0.15s; margin-bottom: -2px; border: 2px solid transparent; }
+  .tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+  .tab.active { background: var(--card); color: var(--text); border-color: var(--accent) var(--accent) transparent var(--accent); }
+
+  .preview-pane { background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); overflow: hidden; }
+  .preview-code { padding: 16px 18px; font-family: 'JetBrains Mono','Fira Code',monospace; font-size: 0.78rem; white-space: pre-wrap; max-height: 380px; overflow-y: auto; line-height: 1.55; color: #c9d1d9; }
+  .preview-code.json { color: #93c5fd; }
+  .preview-code.python { color: #86efac; }
+  .preview-code.yaml { color: #fde68a; }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-dim); }
+  .empty-state .big-icon { font-size: 2.8rem; margin-bottom: 10px; opacity: 0.6; }
+
+  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo-icon">⚡</div>
+    <h1>TestGen</h1>
+    <p>AI 驱动的通用测试用例自动生成平台</p>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-label"><span class="dot"></span> 输入源</div>
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">拖拽文件到此处，或点击选择文件</div>
+        <div class="upload-hint">支持 .yaml &nbsp; .json &nbsp; .py &nbsp; .docx &nbsp; .pdf</div>
+        <input type="file" id="fileInput" accept=".yaml,.yml,.json,.py,.docx,.pdf" onchange="handleFile(event)">
+      </div>
+      <div class="file-info" id="fileInfo"></div>
+      <div class="format-hint" id="formatHint">📄 接口文档：上传或粘贴 api.yaml / swagger.json 格式的 OpenAPI 规范，需包含 paths（接口路径）、parameters（请求参数）、responses（返回值）定义</div>
+      <div class="divider">或直接粘贴内容</div>
+      <textarea id="textInput" placeholder="在此粘贴 OpenAPI 规范、Python 代码，或输入你的测试需求…" oninput="onTextInput()"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-label"><span class="dot"></span> 生成配置</div>
+      <div class="row">
+        <div class="field">
+          <label>输入类型</label>
+          <select id="sourceType" onchange="onSourceChange()">
+            <option value="openapi">OpenAPI / Swagger 文档</option>
+            <option value="code">Python 源代码</option>
+            <option value="nl">自然语言描述</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>输出格式</label>
+          <select id="outputFormat">
+            <option value="pytest">pytest (.py)</option>
+            <option value="json">JSON</option>
+            <option value="yaml">YAML</option>
+            <option value="excel">Excel (.xlsx)</option>
+            <option value="csv">CSV</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:14px;">
+        <label>测试类型</label>
+        <div class="checks">
+          <label><input type="checkbox" value="api" checked onchange="updateTestTypes()"><span>接口测试</span></label>
+          <label><input type="checkbox" value="e2e" onchange="updateTestTypes()"><span>端到端测试</span></label>
+          <label><input type="checkbox" value="functional" onchange="updateTestTypes()"><span>功能测试</span></label>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <span>AI 智能增强 (LLM)</span>
+        <div class="toggle on" id="llmToggle" onclick="toggleLLM()"></div>
+      </div>
+
+      <div id="llmSettings">
+        <div class="row">
+          <div class="field">
+            <label>API 密钥</label>
+            <input type="password" id="llmApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" style="font-family:monospace;">
+          </div>
+          <div class="field">
+            <label>API 地址（可选）</label>
+            <input type="text" id="llmBaseUrl" placeholder="https://api.deepseek.com/v1">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>模型</label>
+            <input type="text" id="llmModel" value="deepseek-chat" placeholder="deepseek-chat / gpt-4o / ...">
+          </div>
+          <div class="field">
+            <label>温度参数</label>
+            <input type="number" id="temperature" value="0.3" min="0" max="2" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>每端点最大用例数</label>
+          <input type="number" id="maxCases" value="5" min="1" max="20">
+        </div>
+        <div class="field">
+          <label>每函数最大用例数</label>
+          <input type="number" id="maxUnitCases" value="3" min="1" max="10">
+        </div>
+      </div>
+
+      <button class="btn btn-save" onclick="saveConfig()">💾 保存配置</button>
+      <div class="save-status" id="saveStatus"></div>
+      <button class="btn btn-primary" id="generateBtn" onclick="generate()">
+        ✨ 生成测试用例
+      </button>
+    </div>
+  </div>
+
+  <div class="status-bar" id="statusBar">
+    <div class="spinner"></div>
+    <span id="statusText">正在生成...</span>
+  </div>
+
+  <div class="results" id="results">
+    <div class="card">
+      <div class="result-header">
+        <div>
+          <span class="badge badge-success" id="resultBadge"></span>
+          <span style="margin-left:10px;font-size:0.83rem;color:var(--text-dim);" id="resultSummary"></span>
+        </div>
+        <button class="btn btn-sm btn-ghost" id="downloadAllBtn" onclick="downloadAll()">📥 一键下载 (.zip)</button>
+      </div>
+      <div class="tabs" id="tabs"></div>
+      <div class="preview-pane">
+        <div class="preview-code" id="previewContent">
+          <div class="empty-state">
+            <div class="big-icon">📋</div>
+            <p>请点击上方文件标签页查看预览</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let uploadedFile = null;
+let generationResult = null;
+
+const STORAGE_KEY = 'testgen_cfg_v2';
+
+function cryptoSeed(){return[navigator.userAgent||'',navigator.language||'',screen.colorDepth+'x'+screen.width+'x'+screen.height,new Date().getTimezoneOffset()].join('::')}
+async function deriveKey(salt){const em=new TextEncoder();const km=await crypto.subtle.importKey('raw',em.encode(cryptoSeed()),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:200000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function encryptData(p){if(!p)return'';const s=crypto.getRandomValues(new Uint8Array(16));const iv=crypto.getRandomValues(new Uint8Array(12));const k=await deriveKey(s);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(p));const b=new Uint8Array(16+12+ct.byteLength);b.set(s,0);b.set(iv,16);b.set(new Uint8Array(ct),28);return btoa(String.fromCharCode(...b))}
+async function decryptData(e){if(!e)return'';try{const b=Uint8Array.from(atob(e),c=>c.charCodeAt(0));const s=b.slice(0,16),iv=b.slice(16,28),ct=b.slice(28);const k=await deriveKey(s);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv},k,ct))}catch(_){return''}}
+
+async function saveConfig(){
+  const ak=document.getElementById('llmApiKey').value;
+  const cfg={llmEnabled:document.getElementById('llmToggle').classList.contains('on'),apiKeyEnc:ak?await encryptData(ak):'',apiKeyHint:ak?ak.slice(0,4)+'****'+ak.slice(-4):'',baseUrl:document.getElementById('llmBaseUrl').value,model:document.getElementById('llmModel').value,temperature:document.getElementById('temperature').value,maxCases:document.getElementById('maxCases').value,maxUnitCases:document.getElementById('maxUnitCases').value,sourceType:document.getElementById('sourceType').value,outputFormat:document.getElementById('outputFormat').value};
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(cfg));
+  const el=document.getElementById('saveStatus');el.textContent='✓ 已保存（加密存储）';el.style.color='var(--green)';el.style.opacity='1';setTimeout(()=>{el.style.opacity='0'},2500);
+}
+
+async function loadConfig(){
+  try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY));if(!s)return;
+  if(s.baseUrl)document.getElementById('llmBaseUrl').value=s.baseUrl;if(s.model)document.getElementById('llmModel').value=s.model;
+  if(s.temperature)document.getElementById('temperature').value=s.temperature;if(s.maxCases)document.getElementById('maxCases').value=s.maxCases;
+  if(s.maxUnitCases)document.getElementById('maxUnitCases').value=s.maxUnitCases;if(s.sourceType)document.getElementById('sourceType').value=s.sourceType;
+  if(s.outputFormat)document.getElementById('outputFormat').value=s.outputFormat;
+  if(s.llmEnabled===false){document.getElementById('llmToggle').classList.remove('on');document.getElementById('llmSettings').style.display='none'}
+  if(s.apiKeyEnc)document.getElementById('llmApiKey').value=await decryptData(s.apiKeyEnc);
+  }catch(_){}
+}
+loadConfig();
+
+const dropZone=document.getElementById('dropZone');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag')});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag');const f=e.dataTransfer.files;if(f.length>0){uploadedFile=f[0];showFile(f[0])}});
+
+function handleFile(e){if(e.target.files.length>0){uploadedFile=e.target.files[0];showFile(e.target.files[0])}}
+function showFile(f){document.getElementById('fileInfo').innerHTML='<span class="file-badge">📎 '+f.name+' ('+(f.size/1024).toFixed(1)+' KB)</span>';const ext=f.name.split('.').pop().toLowerCase();if(['yaml','yml','json'].includes(ext))document.getElementById('sourceType').value='openapi';else if(ext==='py')document.getElementById('sourceType').value='code';else document.getElementById('sourceType').value='nl';onSourceChange()}
+
+function onTextInput(){const v=document.getElementById('textInput').value.trim();if(v){uploadedFile=null;document.getElementById('fileInput').value='';document.getElementById('fileInfo').innerHTML='';if(v.startsWith('openapi:')||(v.startsWith('{')&&v.includes('"openapi"'))||v.startsWith('swagger:'))document.getElementById('sourceType').value='openapi';else if(/^(def |class |import |from |async def )/.test(v))document.getElementById('sourceType').value='code';else document.getElementById('sourceType').value='nl';onSourceChange()}}
+
+function onSourceChange(){const s=document.getElementById('sourceType').value;document.querySelectorAll('.checks input[type=checkbox]').forEach(c=>c.checked=false);if(s==='openapi')document.querySelector('.checks input[value="api"]').checked=true;else if(s==='code')document.querySelector('.checks input[value="functional"]').checked=true;const h={openapi:'📄 接口文档：上传或粘贴 api.yaml / swagger.json 格式的 OpenAPI 规范，需包含 paths（接口路径）、parameters（请求参数）、responses（返回值）定义',code:'💻 源代码：上传 .py 文件或粘贴 Python 代码，系统自动提取函数名、参数类型、docstring 文档，生成单元测试用例',nl:'📝 需求文档：上传 .docx / .pdf 需求文档（PRD、用户故事、验收标准），或直接输入文字描述，如"用户登录功能，输入手机号+验证码登录"'};document.getElementById('formatHint').textContent=h[s]||''}
+
+function updateTestTypes(){if(document.querySelectorAll('.checks input[type=checkbox]:checked').length===0)document.querySelector('.checks input[value="api"]').checked=true}
+function toggleLLM(){const t=document.getElementById('llmToggle'),s=document.getElementById('llmSettings');t.classList.toggle('on');s.style.display=t.classList.contains('on')?'block':'none'}
+
+async function generate(){
+  const ti=document.getElementById('textInput').value.trim();if(!uploadedFile&&!ti){alert('请先上传文件或在文本框中粘贴内容');return}
+  const btn=document.getElementById('generateBtn');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> 正在生成...';
+  const bar=document.getElementById('statusBar');bar.style.display='flex';bar.style.background='var(--card)';bar.style.border='1px solid var(--border)';
+  document.getElementById('statusText').textContent='正在解析输入并生成测试用例...';document.getElementById('results').style.display='none';
+  const fd=new FormData();if(uploadedFile)fd.append('file',uploadedFile);else fd.append('text_input',ti);
+  fd.append('source',document.getElementById('sourceType').value);fd.append('output_format',document.getElementById('outputFormat').value);
+  fd.append('test_types',Array.from(document.querySelectorAll('.checks input[type=checkbox]:checked')).map(c=>c.value).join(','));
+  const llmOn=document.getElementById('llmToggle').classList.contains('on');fd.append('llm_enabled',llmOn);
+  if(llmOn){fd.append('llm_model',document.getElementById('llmModel').value);fd.append('temperature',document.getElementById('temperature').value);fd.append('llm_api_key',document.getElementById('llmApiKey').value);fd.append('llm_base_url',document.getElementById('llmBaseUrl').value)}
+  fd.append('max_cases',document.getElementById('maxCases').value);fd.append('max_unit_cases',document.getElementById('maxUnitCases').value);
+  try{const r=await fetch('/api/generate',{method:'POST',body:fd});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'生成失败');
+    generationResult=d;showResults(d);bar.style.background='var(--green-soft)';bar.style.border='1px solid rgba(52,211,153,0.3)';
+    document.getElementById('statusText').textContent='完成！共 '+d.total_cases+' 个用例，'+d.suites_count+' 个套件';bar.querySelector('.spinner').style.display='none'}
+  catch(err){bar.style.background='var(--red-soft)';bar.style.border='1px solid rgba(248,113,113,0.3)';document.getElementById('statusText').textContent='失败: '+err.message;bar.querySelector('.spinner').style.display='none'}
+  finally{btn.disabled=false;btn.innerHTML='✨ 生成测试用例'}
+}
+
+function showResults(d){document.getElementById('results').style.display='block';document.getElementById('resultBadge').textContent=d.total_cases+' 个用例';document.getElementById('resultSummary').textContent=d.suites_count+' 个套件 | '+d.output_files.length+' 个文件';document.getElementById('downloadAllBtn').onclick=()=>{window.open(d.download_all_url,'_blank')};const t=document.getElementById('tabs');t.innerHTML='';if(d.preview_files&&d.preview_files.length>0){d.preview_files.forEach((f,i)=>{const tb=document.createElement('div');tb.className='tab'+(i===0?' active':'');tb.textContent='📄 '+f.name;tb.onclick=()=>showPreview(i);t.appendChild(tb)});showPreview(0)}else{document.getElementById('previewContent').innerHTML='<div class="empty-state"><div class="big-icon">&#10003;</div><p>生成完成！</p><p style="font-size:0.8rem;margin-top:8px"><a href="'+d.download_all_url+'" style="color:var(--accent)">点击下载全部文件 (.zip)</a></p></div>'}}
+
+function showPreview(i){const fs=generationResult.preview_files;if(!fs||i>=fs.length)return;document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));const f=fs[i],el=document.getElementById('previewContent');if(f.language==='excel'){el.className='preview-code';el.innerHTML='<div class="empty-state"><div class="big-icon">&#128202;</div><p>'+f.name+'</p><p style="font-size:0.8rem;margin-top:8px"><a href="'+f.download_url+'" style="color:var(--accent)">点击下载 Excel 文件</a></p></div>'}else if(f.content){el.className='preview-code '+(f.language||'');el.textContent=f.content}else{el.className='preview-code';el.innerHTML='<div class="empty-state"><p>暂不支持预览此格式</p></div>'}}
+
+function downloadAll(){if(generationResult)window.open(generationResult.download_all_url,'_blank')}
+</script>
+</body>
+</html>
