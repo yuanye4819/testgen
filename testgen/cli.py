@@ -1,4 +1,4 @@
-"""
+﻿"""
 命令行界面 (CLI)
 ------------------
 基于 Click 的命令行入口，提供三个子命令:
@@ -45,6 +45,7 @@ TEST_TYPE_MAP = {
     "e2e": TestType.E2E,
     "integration": TestType.INTEGRATION,
     "perf": TestType.PERFORMANCE,
+    "gui": TestType.GUI,
     "functional": TestType.FUNCTIONAL,
 }
 

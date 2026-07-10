@@ -52,6 +52,7 @@ TEST_TYPE_MAP = {
     "integration": TestType.INTEGRATION,
     "perf": TestType.PERFORMANCE,
     "functional": TestType.FUNCTIONAL,
+    "gui": TestType.GUI,
 }
 
 

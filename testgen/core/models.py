@@ -16,6 +16,7 @@ class TestType(Enum):
     INTEGRATION = "integration"
     PERFORMANCE = "performance"
     FUNCTIONAL = "functional"
+    GUI = "gui"
 
 
 class HttpMethod(Enum):
