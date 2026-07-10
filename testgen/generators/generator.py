@@ -31,6 +31,7 @@ from ..core.models import (
     TestCase,
     TestStep,
     TestType,
+    InputSource,
 )
 from .llm_client import LLMClient
 from .prompt_builder import PromptBuilder
@@ -558,8 +559,8 @@ class TestCaseGenerator(BaseGenerator):
     ) -> list[TestCase]:
         """通用规则模板：有 URL 页面数据则生成针对性用例，否则生成骨架"""
         
-        # ── URL 模式：基于页面元素生成 ──────────────────
-        if context.page_elements:
+        # ── URL 模式：基于页面元素生成（含 SPA 退化处理）──
+        if context.input_source == InputSource.URL or context.page_elements:
             return self._generate_url_cases(context, test_type)
         
         # ── 通用骨架 ─────────────────────────────────────
@@ -605,12 +606,47 @@ class TestCaseGenerator(BaseGenerator):
         cases.append(TestCase(
             id=f"{test_type.value}_{idx:03d}",
             name=f"{title} - 页面加载验证",
-            description=f"验证 {title} 页面能正常加载，页面元素完整显示",
+            description=f"验证 {title} 页面能正常加载，HTTP 200",
             test_type=test_type, tags=["smoke", "e2e"], priority="P0",
             preconditions="网络正常，服务可用",
-            steps=[TestStep(step_number=1, action=f"访问页面 {title}", expected_result="页面正常加载，HTTP 200，页面元素完整渲染")],
-            expected_result="页面成功加载，所有关键元素可见",
+            steps=[TestStep(step_number=1, action=f"访问 {title}", expected_result="页面正常加载，HTTP 200，无报错")],
+            expected_result="页面成功加载",
         ))
+
+        # SPA 降级：页面元素极少时补充基础验证
+        total_elements = (len(pe.get("forms",[])) + len(pe.get("buttons",[])) + 
+                          len(pe.get("inputs",[])) + len(pe.get("links",[])))
+        if total_elements == 0:
+            idx += 1
+            cases.append(TestCase(
+                id=f"{test_type.value}_{idx:03d}",
+                name=f"{title} - 页面基础渲染验证",
+                description=f"验证 {title} 页面基础 HTML 结构存在，JS 资源可加载",
+                test_type=test_type, tags=["smoke", "spa"], priority="P0",
+                preconditions="浏览器支持 JavaScript",
+                steps=[TestStep(step_number=1, action="打开浏览器开发者工具检查 Network", expected_result="无404错误，无JS报错")],
+                expected_result="页面骨架正常渲染",
+            ))
+            idx += 1
+            cases.append(TestCase(
+                id=f"{test_type.value}_{idx:03d}",
+                name=f"{title} - 登录表单可见性验证",
+                description=f"验证 {title} 登录表单在 JS 执行后正常渲染（SPA 动态加载）",
+                test_type=test_type, tags=["smoke", "spa"], priority="P0",
+                preconditions="页面已完全加载",
+                steps=[TestStep(step_number=1, action="等待页面完全加载", expected_result="登录表单元素可见且可交互")],
+                expected_result="登录表单完整显示",
+            ))
+            idx += 1
+            cases.append(TestCase(
+                id=f"{test_type.value}_{idx:03d}",
+                name=f"{title} - 响应时间验证",
+                description=f"验证 {title} 页面首次加载性能",
+                test_type=test_type, tags=["performance", "spa"], priority="P2",
+                preconditions="清除浏览器缓存",
+                steps=[TestStep(step_number=1, action="刷新页面测量加载时间", expected_result="首次渲染 < 3秒")],
+                expected_result="页面加载性能达标",
+            ))
 
         # 表单测试
         for i, form in enumerate(pe.get("forms", [])):

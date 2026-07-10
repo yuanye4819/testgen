@@ -7,7 +7,7 @@
   1. 根据 input_source 选择对应的解析器
   2. 调用生成器（LLM 或规则模式）
   3. 根据 output_format 选择对应的输出适配器
-  4. 打印流程摘要（发现端点数、生成用例数、输出文件列表）
+  4. 打印流程摘要（found端点数、生成用例数、输出文件列表）
 
 设计意图:
   协调器不包含任何解析/生成/输出逻辑，
@@ -86,8 +86,8 @@ class Orchestrator:
             llm_temperature:        LLM 温度参数（0-1，越低越确定）
             output_dir:             输出目录
             base_url:               API 基础 URL
-            max_cases_per_endpoint: 每个 API 端点最大生成用例数
-            max_cases_per_function: 每个函数最大生成用例数
+            max_cases_per_endpoint: 每API endpoints最大生成用例数
+            max_cases_per_function: 每functions最大生成用例数
         
         Returns:
             {
@@ -116,39 +116,39 @@ class Orchestrator:
         # 2. 解析输入
         parser = self._parsers.get(input_source)
         if parser is None:
-            return {"success": False, "error": f"不支持的输入来源: {input_source.value}"}
+            return {"success": False, "error": f"Unsupported input source: {input_source.value}"}
 
-        print(f"\n[解析] 解析输入 ({input_source.value})...")
+        print(f"\n[Parse] source={input_source.value}")
         try:
             context = parser.parse(context)
         except Exception as e:
-            return {"success": False, "error": f"解析失败: {e}"}
+            return {"success": False, "error": f"Parse failed: {e}"}
 
         # 打印解析结果摘要
-        self._print_parse_summary(context)
+        # self._print_parse_summary(context)  # skip to avoid GBK errors
 
         # 3. 生成测试用例
-        print(f"\n[生成] 生成测试用例 (LLM={'启用' if llm_enabled else '关闭'})...")
+        print(f"\n[Generate] LLM={'启用' if llm_enabled else '关闭'})...")
         try:
             suites = self._generator.generate(context)
         except Exception as e:
-            return {"success": False, "error": f"生成失败: {e}"}
+            return {"success": False, "error": f"Generation failed: {e}"}
 
         total_cases = sum(s.total_cases for s in suites)
-        print(f"  OK 生成了 {len(suites)} 个测试套件，共 {total_cases} 个测试用例")
+        print(f"  OK generated {len(suites)}  suites,  {total_cases}  cases")
 
         # 4. 输出
-        print(f"\n[输出] 输出 ({output_format.value})...")
+        print(f"\n[Output] {output_format.value})...")
         adapter = self._output_adapters.get(output_format)
         if adapter is None:
-            return {"success": False, "error": f"不支持的输出格式: {output_format.value}"}
+            return {"success": False, "error": f"Unsupported output format: {output_format.value}"}
 
         try:
             output_files = adapter.write(suites, context)
         except Exception as e:
-            return {"success": False, "error": f"输出失败: {e}"}
+            return {"success": False, "error": f"Output failed: {e}"}
 
-        print(f"  OK 生成了 {len(output_files)} 个文件")
+        print(f"  OK generated {len(output_files)}  files")
         for f in output_files:
             print(f"    → {f}")
 
@@ -164,32 +164,32 @@ class Orchestrator:
         打印解析结果摘要
         
         输出格式:
-          发现 N 个 API 端点
+          found N API endpoints
             - METHOD  path
           （最多展示前 5 条，超出提示总数）
         """
         if context.api_endpoints:
             methods = set(e.method.value for e in context.api_endpoints)
-            print(f"  OK 发现 {len(context.api_endpoints)} 个 API 端点")
+            print(f"  OK found {len(context.api_endpoints)} API endpoints")
             for ep in context.api_endpoints[:5]:
                 print(f"    - {ep.method.value:6s} {ep.path}")
             if len(context.api_endpoints) > 5:
-                print(f"    ... 还有 {len(context.api_endpoints) - 5} 个")
+                print(f"    ... + {len(context.api_endpoints) - 5} 个")
 
         if context.functions:
-            print(f"  OK 发现 {len(context.functions)} 个函数")
+            print(f"  OK found {len(context.functions)} functions")
             for f in context.functions[:5]:
-                print(f"    - {f.name} (复杂度: {f.complexity})")
+                print(f"    - {f.name} (complexity: {f.complexity})")
             if len(context.functions) > 5:
-                print(f"    ... 还有 {len(context.functions) - 5} 个")
+                print(f"    ... + {len(context.functions) - 5} 个")
 
         if context.classes:
-            print(f"  OK 发现 {len(context.classes)} 个类")
+            print(f"  OK found {len(context.classes)} classes")
             for c in context.classes[:5]:
-                print(f"    - {c.name} ({len(c.methods)} 个方法)")
+                print(f"    - {c.name} ({len(c.methods)} methods)")
             if len(context.classes) > 5:
-                print(f"    ... 还有 {len(context.classes) - 5} 个")
+                print(f"    ... + {len(context.classes) - 5} 个")
 
         if context.natural_lang_desc:
             preview = context.natural_lang_desc[:100].replace("\n", " ")
-            print(f"  OK 自然语言描述: {preview}...")
+            print(f"  OK NL desc: {preview}...")
