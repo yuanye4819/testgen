@@ -97,7 +97,8 @@ class NaturalLangParser(BaseParser):
         except Exception as e:
             raise ValueError(f"无法访问网页: {e}")
 
-        soup = BeautifulSoup(resp.text, "html.parser")
+        # 使用 resp.content 让 BeautifulSoup 自动检测编码
+        soup = BeautifulSoup(resp.content, "html.parser")
 
         # 提取页面标题
         title = soup.title.string.strip() if soup.title else "未命名页面"
