@@ -1,4 +1,4 @@
-﻿"""
+"""
 主测试用例生成器
 --------------------
 协调 LLM 智能生成与规则模板回退两种模式。
@@ -65,6 +65,8 @@ class TestCaseGenerator(BaseGenerator):
                 suites.append(self._generate_unit_rules(context))
             elif test_type == TestType.E2E:
                 suites.append(self._generate_e2e_rules(context))
+            elif test_type == TestType.GUI:
+                suites.append(self._generate_gui_rules(context))
             else:
                 suites.append(self._generate_generic_rules(context, test_type))
 
@@ -278,6 +280,14 @@ class TestCaseGenerator(BaseGenerator):
             test_cases=self._fallback_generic_cases(context, TestType.E2E),
         )
 
+    def _generate_gui_rules(self, context: GenerationContext) -> TestSuite:
+        """规则模式：生成 GUI 测试用例"""
+        return TestSuite(
+            name="GUI_Tests",
+            description="基于规则生成的 GUI 测试用例",
+            test_cases=self._fallback_gui_cases(context),
+        )
+
     def _generate_generic_rules(
         self, context: GenerationContext, test_type: TestType
     ) -> TestSuite:
@@ -448,6 +458,100 @@ class TestCaseGenerator(BaseGenerator):
             ))
 
         return cases[:context.max_cases_per_function]
+
+
+    def _fallback_gui_cases(self, context: GenerationContext) -> list[TestCase]:
+        """GUI 测试专用规则模板"""
+        return [
+            TestCase(
+                id="gui_001", name="界面元素完整性验证",
+                description="验证页面所有必要UI元素（输入框、按钮、标签、图标）是否存在且可见",
+                test_type=TestType.GUI, tags=["gui", "smoke"], priority="P0",
+                preconditions="系统正常启动，进入目标页面",
+                steps=[TestStep(step_number=1, action="逐一检查页面UI元素", expected_result="所有元素存在且可见")],
+                expected_result="页面元素完整，无缺失，无重叠",
+                module="界面验证", sub_feature="元素检查",
+            ),
+            TestCase(
+                id="gui_002", name="界面布局验证-不同分辨率",
+                description="验证在不同分辨率（1366x768、1920x1080、2560x1440）下页面布局是否正常",
+                test_type=TestType.GUI, tags=["gui", "layout"], priority="P1",
+                preconditions="准备不同分辨率的测试环境",
+                steps=[TestStep(step_number=1, action="切换分辨率并截图对比", expected_result="页面布局自适应，无错位、遮挡、溢出")],
+                expected_result="各分辨率下布局正常，元素对齐正确",
+                module="界面验证", sub_feature="布局适配",
+            ),
+            TestCase(
+                id="gui_003", name="文本内容核对",
+                description="验证页面所有文本内容（标题、提示、按钮文字、错误信息）是否与需求文档一致",
+                test_type=TestType.GUI, tags=["gui", "text"], priority="P1",
+                preconditions="准备需求文档/UI设计稿",
+                steps=[TestStep(step_number=1, action="逐项核对页面文字与需求文档", expected_result="所有文本与需求一致，无错别字，无乱码")],
+                expected_result="文字内容准确，无错别字",
+                module="界面验证", sub_feature="文本核对",
+            ),
+            TestCase(
+                id="gui_004", name="按钮交互验证",
+                description="验证所有按钮的点击、悬停、禁用三种状态的视觉反馈",
+                test_type=TestType.GUI, tags=["gui", "interaction"], priority="P1",
+                preconditions="进入包含按钮的页面",
+                steps=[
+                    TestStep(step_number=1, action="鼠标悬停在按钮上", expected_result="按钮显示hover样式（颜色变化或阴影）"),
+                    TestStep(step_number=2, action="点击按钮", expected_result="按钮有点击反馈（按下效果），触发对应功能"),
+                    TestStep(step_number=3, action="查看禁用按钮", expected_result="禁用按钮呈灰色，不可点击"),
+                ],
+                expected_result="按钮三种状态视觉反馈正确",
+                module="交互验证", sub_feature="按钮状态",
+            ),
+            TestCase(
+                id="gui_005", name="输入框交互验证",
+                description="验证输入框的获取焦点、输入、失焦、错误提示的视觉表现",
+                test_type=TestType.GUI, tags=["gui", "interaction"], priority="P1",
+                preconditions="进入包含输入框的页面",
+                steps=[
+                    TestStep(step_number=1, action="点击输入框获取焦点", expected_result="输入框高亮，光标出现，显示边框变色"),
+                    TestStep(step_number=2, action="输入文本内容", expected_result="文字正常显示，placeholder消失"),
+                    TestStep(step_number=3, action="点击其他区域失焦", expected_result="输入框恢复默认样式"),
+                    TestStep(step_number=4, action="输入非法内容并提交", expected_result="输入框变红，显示错误提示文字"),
+                ],
+                expected_result="输入框四种状态视觉表现正确",
+                module="交互验证", sub_feature="输入框状态",
+            ),
+            TestCase(
+                id="gui_006", name="弹窗/对话框验证",
+                description="验证弹窗的弹出、关闭、遮罩层是否正常",
+                test_type=TestType.GUI, tags=["gui", "dialog"], priority="P2",
+                preconditions="触发弹窗的条件已满足",
+                steps=[
+                    TestStep(step_number=1, action="触发弹窗弹出", expected_result="弹窗居中显示，背景有半透明遮罩，弹窗外区域不可操作"),
+                    TestStep(step_number=2, action="点击关闭按钮或遮罩", expected_result="弹窗关闭，页面恢复正常"),
+                ],
+                expected_result="弹窗正常弹出和关闭，遮罩有效",
+                module="交互验证", sub_feature="弹窗",
+            ),
+            TestCase(
+                id="gui_007", name="列表/表格验证",
+                description="验证列表或表格的列头、数据行、分页、排序图标的显示",
+                test_type=TestType.GUI, tags=["gui", "table"], priority="P2",
+                preconditions="列表页面已加载数据",
+                steps=[
+                    TestStep(step_number=1, action="查看表头样式", expected_result="表头背景色、字体加粗，与数据行区分明显"),
+                    TestStep(step_number=2, action="查看数据行交替色", expected_result="奇偶行背景色交替，提高可读性"),
+                    TestStep(step_number=3, action="鼠标悬停数据行", expected_result="当前行高亮显示"),
+                ],
+                expected_result="列表样式规范，交互反馈正确",
+                module="界面验证", sub_feature="列表样式",
+            ),
+            TestCase(
+                id="gui_008", name="图标与图片验证",
+                description="验证页面图标和图片是否正常加载、尺寸正确、无拉伸变形",
+                test_type=TestType.GUI, tags=["gui", "image"], priority="P2",
+                preconditions="页面包含图标或图片元素",
+                steps=[TestStep(step_number=1, action="检查所有图标和图片", expected_result="全部正常加载，无裂图，尺寸比例正确")],
+                expected_result="图标图片显示正常",
+                module="界面验证", sub_feature="图标图片",
+            ),
+        ]
 
     def _fallback_generic_cases(
         self, context: GenerationContext, test_type: TestType
