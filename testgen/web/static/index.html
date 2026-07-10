@@ -185,9 +185,7 @@
       <div class="field" style="margin-bottom:14px;">
         <label>测试类型</label>
         <div class="checks">
-          <label><input type="checkbox" value="api" checked onchange="updateTestTypes()"><span>接口测试</span></label>
-          <label><input type="checkbox" value="e2e" onchange="updateTestTypes()"><span>端到端测试</span></label>
-          <label><input type="checkbox" value="functional" onchange="updateTestTypes()"><span>功能测试</span></label>
+          <label><input type="checkbox" value="functional" checked onchange="updateTestTypes()"><span>功能测试</span></label>
           <label><input type="checkbox" value="gui" onchange="updateTestTypes()"><span>GUI测试</span></label>
         </div>
       </div>
@@ -306,9 +304,9 @@ function showFile(f){document.getElementById('fileInfo').innerHTML='<span class=
 
 function onTextInput(){const v=document.getElementById('textInput').value.trim();if(v){uploadedFile=null;document.getElementById('fileInput').value='';document.getElementById('fileInfo').innerHTML='';if(v.startsWith('openapi:')||(v.startsWith('{')&&v.includes('"openapi"'))||v.startsWith('swagger:'))document.getElementById('sourceType').value='openapi';else if(/^(def |class |import |from |async def )/.test(v))document.getElementById('sourceType').value='code';else document.getElementById('sourceType').value='nl';onSourceChange()}}
 
-function onSourceChange(){const s=document.getElementById('sourceType').value;document.querySelectorAll('.checks input[type=checkbox]').forEach(c=>c.checked=false);if(s==='openapi')document.querySelector('.checks input[value="api"]').checked=true;else if(s==='code')document.querySelector('.checks input[value="functional"]').checked=true;else if(s==='url'){document.querySelector('.checks input[value="e2e"]').checked=true;document.querySelector('.checks input[value="functional"]').checked=true}const h={openapi:'📄 接口文档：上传或粘贴 api.yaml / swagger.json 格式的 OpenAPI 规范，需包含 paths（接口路径）、parameters（请求参数）、responses（返回值）定义',code:'💻 源代码：上传 .py 文件或粘贴 Python 代码，系统自动提取函数名、参数类型、docstring 文档，生成单元测试用例',nl:'📝 需求文档：上传 .docx / .pdf 需求文档（PRD、用户故事、验收标准），或直接输入文字描述，如"用户登录功能，输入手机号+验证码登录"'};document.getElementById('formatHint').textContent=h[s]||''}
+function onSourceChange(){const s=document.getElementById('sourceType').value;document.querySelectorAll('.checks input[type=checkbox]').forEach(c=>c.checked=false);if(s==='openapi')document.querySelector('.checks input[value="functional"]').checked=true;else if(s==='code')document.querySelector('.checks input[value="functional"]').checked=true;else if(s==='url'){document.querySelector('.checks input[value="gui"]').checked=true;document.querySelector('.checks input[value="functional"]').checked=true}const h={openapi:'📄 接口文档：上传或粘贴 api.yaml / swagger.json 格式的 OpenAPI 规范，需包含 paths（接口路径）、parameters（请求参数）、responses（返回值）定义',code:'💻 源代码：上传 .py 文件或粘贴 Python 代码，系统自动提取函数名、参数类型、docstring 文档，生成单元测试用例',nl:'📝 需求文档：上传 .docx / .pdf 需求文档（PRD、用户故事、验收标准），或直接输入文字描述，如"用户登录功能，输入手机号+验证码登录"'};document.getElementById('formatHint').textContent=h[s]||''}
 
-function updateTestTypes(){if(document.querySelectorAll('.checks input[type=checkbox]:checked').length===0)document.querySelector('.checks input[value="api"]').checked=true}
+function updateTestTypes(){if(document.querySelectorAll('.checks input[type=checkbox]:checked').length===0)document.querySelector('.checks input[value="functional"]').checked=true}
 function toggleLLM(){const t=document.getElementById('llmToggle'),s=document.getElementById('llmSettings');t.classList.toggle('on');s.style.display=t.classList.contains('on')?'block':'none'}
 
 async function generate(){
