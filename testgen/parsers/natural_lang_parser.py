@@ -43,11 +43,6 @@ class NaturalLangParser(BaseParser):
             context.natural_lang_desc = parsed["desc"]
             context.page_title = parsed["title"]
             context.page_elements = parsed["elements"]
-            from ..core.models import TestType
-            if TestType.E2E not in context.test_types:
-                context.test_types.append(TestType.E2E)
-            if TestType.FUNCTIONAL not in context.test_types:
-                context.test_types.append(TestType.FUNCTIONAL)
             return context
 
         # ── 文件模式 ──────────────────────────────
