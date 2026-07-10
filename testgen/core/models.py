@@ -151,6 +151,9 @@ class TestCase:
     preconditions: str = ""                      # 前置条件
     steps: list[TestStep] = field(default_factory=list)     # 测试步骤
     expected_result: str = ""                    # 整体预期结果
+    module: str = ""                             # 测试模块（模板字段）
+    sub_feature: str = ""                        # 子功能（模板字段）
+    system_name: str = ""                        # 所属系统（模板字段）
     
     # API 测试特有字段
     endpoint: Optional[APIEndpoint] = None       # 关联的 API 端点（回填引用）

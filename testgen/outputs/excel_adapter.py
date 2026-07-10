@@ -62,23 +62,20 @@ class ExcelAdapter(BaseOutputAdapter):
         }
 
         headers = [
-            "用例ID", "用例名称", "描述", "测试类型", "优先级",
-            "标签", "前置条件", "整体预期结果", "步骤编号", "操作步骤", "预期结果",
-            "断言", "期望状态码", "用例预期结果",
+            "用例ID", "测试类型", "测试模块", "子功能", "用例标题",
+            "前置条件/测试数据", "操作步骤", "所属系统", "预期结果",
         ]
 
         generated_files: list[str] = []
 
         for i, suite in enumerate(suites):
-            sheet_name = suite.name[:31]  # Excel sheet name 限制 31 字符
+            sheet_name = suite.name[:31]
             if i == 0:
-                # 第一个套件复用默认 sheet
                 ws = wb.active
                 ws.title = sheet_name
             else:
                 ws = wb.create_sheet(title=sheet_name)
 
-            # 写标题行
             for col, header in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col, value=header)
                 cell.font = header_font
@@ -86,55 +83,38 @@ class ExcelAdapter(BaseOutputAdapter):
                 cell.alignment = header_alignment
                 cell.border = thin_border
 
-            # 写测试用例数据
             row = 2
-            for case in suite.test_cases:
-                preconditions_str = case.preconditions
-                tags_str = ", ".join(case.tags)
+            for idx, case in enumerate(suite.test_cases):
+                test_id = case.id if case.id else f"id_{idx+1:03d}"
+                test_type_str = case.test_type.value
+                module_str = case.module or suite.name.split("_")[0] if "_" in suite.name else ""
+                sub_feature_str = case.sub_feature or case.name.split(" - ")[1] if " - " in case.name else ""
+                title_str = case.description or case.name
+                precond_str = case.preconditions
+                system_str = case.system_name or ""
 
-                if case.steps:
-                    for step in case.steps:
-                        assertions_str = "\n".join(f"✓ {a}" for a in step.assertions)
-                        row_data = [
-                            case.id, case.name, case.description,
-                            case.test_type.value, case.priority, tags_str,
-                            preconditions_str, case.expected_result, step.step_number, step.action,
-                            step.expected_result, assertions_str, case.expected_status,
-                        ]
-                        for col, value in enumerate(row_data, 1):
-                            cell = ws.cell(row=row, column=col, value=value)
-                            cell.border = thin_border
-                            cell.alignment = Alignment(wrap_text=True, vertical="top")
-                        # 优先级着色
-                        if case.priority in priority_fills:
-                            ws.cell(row=row, column=5).fill = priority_fills[case.priority]
-                        row += 1
+                # 操作步骤
+                steps_lines = []
+                for step in case.steps:
+                    steps_lines.append(f"{step.step_number}.{step.action}")
+                steps_str = "\n".join(steps_lines)
 
-                    # 合并该 case 的非步骤列（如果有多步骤）
-                    if len(case.steps) > 1:
-                        from openpyxl.utils import get_column_letter
-                        start_row = row - len(case.steps)
-                        end_row = row - 1
-                        for merge_col in [1, 2, 3, 4, 5, 6, 7, 8, 13]:
-                            if start_row < end_row:
-                                col_letter = get_column_letter(merge_col)
-                                ws.merge_cells(f"{col_letter}{start_row}:{col_letter}{end_row}")
-                else:
-                    row_data = [
-                        case.id, case.name, case.description,
-                        case.test_type.value, case.priority, tags_str,
-                        preconditions_str, case.expected_result, "", "", "", "", case.expected_status,
-                    ]
-                    for col, value in enumerate(row_data, 1):
-                        cell = ws.cell(row=row, column=col, value=value)
-                        cell.border = thin_border
-                        cell.alignment = Alignment(wrap_text=True, vertical="top")
-                    if case.priority in priority_fills:
-                        ws.cell(row=row, column=5).fill = priority_fills[case.priority]
-                    row += 1
+                expected_str = case.expected_result
+                if not expected_str and case.steps:
+                    expected_str = case.steps[-1].expected_result
+
+                row_data = [
+                    test_id, test_type_str, module_str, sub_feature_str,
+                    title_str, precond_str, steps_str, system_str, expected_str,
+                ]
+                for col, value in enumerate(row_data, 1):
+                    cell = ws.cell(row=row, column=col, value=value)
+                    cell.border = thin_border
+                    cell.alignment = Alignment(wrap_text=True, vertical="top")
+                row += 1
 
             # 列宽调整
-            col_widths = [25, 30, 40, 12, 10, 20, 30, 10, 50, 50, 40, 12]
+            col_widths = [20, 12, 15, 15, 55, 30, 45, 15, 35]
             for col, width in enumerate(col_widths, 1):
                 ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = width
 
