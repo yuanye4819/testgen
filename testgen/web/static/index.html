@@ -142,8 +142,20 @@
       </div>
       <div class="file-info" id="fileInfo"></div>
       <div class="format-hint" id="formatHint">📄 接口文档：上传或粘贴 api.yaml / swagger.json 格式的 OpenAPI 规范，需包含 paths（接口路径）、parameters（请求参数）、responses（返回值）定义</div>
-      <div class="divider">或直接粘贴内容</div>
-      <textarea id="textInput" placeholder="在此粘贴 OpenAPI 规范、Python 代码，或输入你的测试需求…" oninput="onTextInput()"></textarea>
+      <div class="divider">📝 描述网站功能（越详细用例越多）</div>
+      <textarea id="textInput" placeholder="请详细描述网站和功能，越详细用例越多：
+
+示例：
+货运APP登录页面，网址 http://yjtp-fuel-admin.youngbook.cn
+- 手机号输入框，限制11位数字
+- 密码输入框，带图片验证码
+- 登录按钮
+
+测试场景：
+1. 正确手机号+正确密码+正确验证码→成功跳转首页
+2. 手机号格式错误（10位/12位/含字母）→提示格式错误
+3. 密码为空→提示请输入密码
+4. 验证码错误→提示刷新验证码" oninput="onTextInput()"></textarea>
     </div>
 
     <div class="card">
